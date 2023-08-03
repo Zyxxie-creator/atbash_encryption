@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="style.css">
+<html lang="ru" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <title>Шифрование Атбаш</title>
+</head>
+<div class="line"></div>
+<body>
+  <div class="block">
+    <div class="text">
+      <p><b>Атбаш</b> — простой шифр подстановки для алфавитного письма. Правило шифрования состоит в замене n-й буквы алфавита буквой с номером m - n + 1, где m — число букв в алфавите.</p>
+      <p>Инструмент предназначен для шифрования и дешифрования текста методом Атбаш. Зашифровать можно как русский текст, так и английский.</p>
+    </div>
+  </div>
+  <div class="block_2">
+
+    <textarea class="form-textarea" rows="7" cols="60" id="srcText" oninput="updateTexts()" spellcheck="false" placeholder="Введите сообщение..."></textarea>
+    <input name="form-file" type="file" id="importfile" accept=".txt,.log,.err,.doc" multiple onChange="readFiles(this);" />
+    <div class="">
+      <label>Алфавит</label>
+      <select class="form-control" id="language" onchange="changeLanguage();" style="width:13rem;">
+        <option value="ru">Русский</option>
+        <option value="en" selected>Английский</option>
+        <option value="de">Немецкий</option>
+      </select>
+      <div id="alphabetWrapper" class="form-inline align-items-center collapse">
+        <input class="" id="alphabet" type="text" style="width: 25em;" oninput="updateTexts();" value="ABCDEFGHIJKLMNOPQRSTUVWXYZ" placeholder="Введите алфавит" />
+      </div>
+    </div>
+    <div id="result" class="collapse bookmark-small">
+      <hr />
+      <h3>Результат</h3>
+      <label id="resultLabel" class="badge badge-dark" for="resultText"></label>
+      <div class="form-group">
+        <textarea class="form-textarea" rows="7" cols="60" id="resultText" spellcheck="false" readonly></textarea>
+        <p>
+          <button class="btn btn-success mt-1" type="button" onclick="copyElementText('resultText')">Копировать</button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+<script>
+function readFiles(input)
+{
+  let file = input.files[0];
+
+  let reader = new FileReader();
+
+  reader.readAsText(file);
+
+  reader.onload = function() {
+    console.log(reader.result);
+        document.getElementById("srcText").value = reader.result;
+          updateTexts();
+  };
+
+  reader.onerror = function() {
+    console.log(reader.error);
+  };
+}
+var DecryptMode = true;
+var KeepAllCharacters = false;
+
+function encodeClick() {
+  if (!checkText() || !checkKey())
+  return;
+
+  document.getElementById('resultLabel').innerText = 'Encoded message';
+  showElement('result');
+  hideElement('decoderfooter');
+  scrollTo('result');
+  DecryptMode = false;
+  updateTexts();
+}
+
+function decodeClick() {
+  if (!checkText() || !checkKey())
+  return;
+
+  document.getElementById('resultLabel').innerText = 'Decoded message.';
+  showElement('result');
+  showElement('decoderfooter');
+  scrollTo('result');
+  DecryptMode = true;
+  updateTexts();
+}
+
+function autoSolveClick() {
+  if (typeof WebAssembly != 'object') {
+    showErrorMessage("ОШИБКА.");
+    return;
+  }
+
+  if (!checkText())
+  return;
+
+  showElement('autosolve');
+  scrollTo('autosolve');
+  autosolve();
+}
+
+function autoSolveClose() {
+  hideElement('autosolve');
+}
+
+function explanationClick() {
+  showElement('explanation');
+  scrollTo('explanation');
+  updateExplanation();
+}
+
+function instructionsClick() {
+  toggleElement('instructions');
+  scrollTo('instructions');
+}
+
+function showGridClick() {
+  showElement('gridwrapper');
+  scrollTo('gridwrapper');
+}
+
+function optionsClose() {
+  hideElement('options');
+}
+
+function explanationClose() {
+  hideElement('explanation');
+}
+
+function showElement(id) {
+  document.getElementById(id).classList.remove('collapse');
+}
+
+function hideElement(id) {
+  document.getElementById(id).classList.add('collapse');
+}
+
+function toggleElement(id) {
+  if (document.getElementById(id).classList.contains('collapse'))
+  showElement(id);
+  else
+  hideElement(id);
+}
+
+function scrollTo(id) {
+  document.getElementById(id).scrollIntoView({ behavior: "smooth" });
+}
+
+function checkText() {
+  if (document.getElementById('srcText').value.length === 0) {
+    document.getElementById('srcText').classList.add('is-invalid');
+    return false;
+  }
+  else {
+    document.getElementById('srcText').classList.remove('is-invalid');
+    return true;
+  }
+}
+
+function checkKey() {
+
+  return true;
+}
+
+function changeLanguage() {
+  var lang = document.getElementById('language').value;
+  if (lang == 'ru')
+  {
+    document.getElementById("alphabet").value = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+
+  }
+  if (lang == 'en') {
+    document.getElementById("alphabet").value = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  }
+  if (lang == 'de') {
+    document.getElementById("alphabet").value = "abcdefghijklmnopqrstuvwxyzäöüß";
+  }
+  updateTexts();
+}
+
+function getAlphabet() {
+  var language = document.getElementById("language").value;
+  switch (language) {
+    case 'en':
+    return 'abcdefghijklmnopqrstuvwxyz';
+    case 'de':
+    return 'abcdefghijklmnopqrstuvwxyzäöüß';
+    default:
+    var alphabet = document.getElementById("alphabet").value.toLowerCase();
+    if (alphabet.length === 0)
+    alphabet = new Array(95).fill(0).map(function (_, i) { return String.fromCharCode(i+32) }).join('');
+    return alphabet;
+  }
+}
+
+function getSrcText() {
+  var text = document.getElementById('srcText').value;
+  return text;
+}
+
+function updateTexts() {
+  var originalText = getSrcText();
+  var options = getOptions();
+  var alphabet = getAlphabet();
+  var key = getKey();
+
+  var keyLength = 1;
+  var keyAlphabet = alphabet.length != 95 ? alphabet : 'abcdefghijklmnopqrstuvwxyz';
+  var resultText = '';
+
+  if (!KeepAllCharacters) {
+    var textMask = getTextMask(originalText, options, alphabet);
+    var normalizedText = getNormalizedText(originalText, textMask);
+    if (normalizedText.length > 0 && keyLength > 0) {
+      var transformedText = DecryptMode ? decrypt(normalizedText, alphabet, key, keyAlphabet) : encrypt(normalizedText, alphabet, key, keyAlphabet);
+      resultText = restoreText(originalText, transformedText, textMask)
+    }
+  } else {
+    if (keyLength > 0)
+    resultText = DecryptMode ? decrypt(originalText, alphabet, key, keyAlphabet) : encrypt(originalText, alphabet, key, keyAlphabet);
+  }
+
+  document.getElementById("resultText").value = resultText;
+}
+
+function htmlEncode(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function getOptions() {
+  var language = document.getElementById("language").value;
+
+  return { preserveCasing: true, language: language, includeSpace: true };
+}
+
+function getTextMask(text, options, alphabet) {
+  var arr = text.split('');
+  var alphabetUpper = alphabet.toUpperCase();
+  var alphabetLower = alphabet.toLowerCase();
+  var length = text.length;
+  for (var i = 0; i < length; i++) {
+    var isUpperLetter = alphabetUpper.indexOf(text[i]) !== -1;
+    var isLowerLetter = alphabetLower.indexOf(text[i]) !== -1;
+    var l = '-';
+    if (options.preserveCasing && isUpperLetter)
+    l = 'A';
+    else if (isUpperLetter || isLowerLetter)
+    l = 'a';
+    else if (options.includeSpace)
+    l = '+';
+    arr[i] = l;
+  }
+
+  return arr.join('');
+}
+
+function getNormalizedText(text, textMask) {
+  var arr = [];
+  var length = textMask.length;
+  for (var i = 0; i < length; i++) {
+    if (textMask[i] === 'a' || textMask[i] === 'A')
+    arr.push(text[i]);
+  }
+
+  return arr.join('').toLowerCase();
+}
+
+function restoreText(originalText, normalizedText, textMask) {
+  var arr = originalText.split('');
+  var j = 0;
+  var length = textMask.length;
+  for (var i = 0; i < length; i++) {
+    switch (textMask[i]) {
+      case 'a':
+      arr[i] = normalizedText[j++]; break;
+      case 'A':
+      arr[i] = normalizedText[j++].toUpperCase(); break;
+      case '-':
+      arr[i] = '';
+    }
+  }
+
+  return arr.join('');
+}
+
+
+function getKey() {
+  return '';
+}
+
+function getKeyShifts(key, keyAlphabet) {
+  var arr = new Array(key.length);
+  for (var i = 0; i < key.length; i++) {
+    var p = keyAlphabet.indexOf(key[i]);
+    arr[i] = p;
+  }
+
+  return arr;
+}
+
+function clearText() {
+  document.getElementById("srcText").value = '';
+  document.getElementById("resultText").value = '';
+}
+
+function autosolve() {
+  var inputText = getSrcText();
+  if (inputText === '')
+  return;
+
+  var language = document.getElementById("language").value;
+  if (language === 'custom')
+  return;
+
+  var msg = { inputText: inputText, lang: language };
+  msg.maxResults = parseInt(document.getElementById('maxResults').value);
+  msg.spacingMode = document.getElementById('spacingMode').value;
+  msg.dictionaryWeight = 3;
+  msg.reportInterval = 200;
+
+  resetAutoSolverProgress();
+
+  worker = new Worker('/script/');
+
+  worker.onmessage = function (e) {
+    updateSearchResults(e.data);
+  };
+  disableSearchButton();
+  clearSearchResults();
+  worker.postMessage(msg);
+}
+
+function resetAutoSolverProgress() {
+  var element = document.getElementById('autoSolveProgress');
+  element.classList.add('progress-bar-animated', 'progress-bar-striped');
+  element.style.width = '10%';
+}
+
+function updateAutoSolverProgress(progress) {
+  var element = document.getElementById('autoSolveProgress');
+  element.style.width = Math.round(10 + progress * 0.9).toString() + '%';
+}
+
+function stopAutoSolverProgress() {
+  var element = document.getElementById('autoSolveProgress');
+  element.classList.remove('progress-bar-animated', 'progress-bar-striped');
+}
+
+function cancel() {
+  worker.terminate();
+  enableSearchButton();
+  stopAutoSolverProgress();
+}
+
+function disableSearchButton() {
+  var btn = document.getElementById("searchbtn");
+  btn.classList.add("progress-bar-striped", "progress-bar-animated");
+  btn.disabled = true;
+  document.getElementById("cancelbtn").classList.remove("d-none");
+}
+
+function enableSearchButton() {
+  var btn = document.getElementById("searchbtn");
+  btn.classList.remove("progress-bar-striped", "progress-bar-animated");
+  btn.removeAttribute("disabled");
+  document.getElementById("cancelbtn").classList.add("d-none");
+}
+
+function clearSearchResults() {
+  document.getElementById('autosolvetbody').innerHTML = '<tr><td></td><td></td><td>Please wait...</td></tr>';
+}
+
+function updateSearchResults(results) {
+  if (results.isChanged) {
+    var autosolvetbody = '';
+    var items = results.items;
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      autosolvetbody += '<tr><td>' + item.score + '</td><td>' + htmlEncode(item.key) + '</td><td>' + htmlEncode(item.text) + '</td></tr>';
+    }
+    document.getElementById("autosolvetbody").innerHTML = autosolvetbody;
+  }
+  updateAutoSolverProgress(results.progress);
+
+  if (results.isFinal) {
+    enableSearchButton();
+    stopAutoSolverProgress();
+  }
+}
+
+function showErrorMessage(msg) {
+  alert(msg);
+}
+
+</script>
+<script>
+var textToolsTexts = [];
+
+function textToolsGetText(id) {
+  var text = document.getElementById(id).value;
+  if (text.length > 0)
+  textToolsTexts.push(text);
+  return text;
+}
+
+function textToolsSetText(id, text) {
+  document.getElementById(id).value = text;
+}
+
+function textToolsRemoveSpaces(id) {
+  var text = textToolsGetText(id);
+  text = text.replace(/\s+/g, '');
+  textToolsSetText(id, text);
+}
+
+function textToolsLettersOnly(id) {
+  var text = textToolsGetText(id);
+  var alphabeticCodes = 'A-Za-zåäöüñÅÄÖÜÑ';
+  var regex = new RegExp('[^' + alphabeticCodes + ']+', 'g');
+  text = text.replace(regex, '');
+  textToolsSetText(id, text);
+}
+
+function textToolsReverse(id) {
+  var text = textToolsGetText(id);
+  text = text.split('').reverse().join('');
+  textToolsSetText(id, text);
+}
+
+function textToolsUpperCase(id) {
+  var text = textToolsGetText(id);
+  text = text.toUpperCase();
+  textToolsSetText(id, text);
+}
+
+function textToolsLowerCase(id) {
+  var text = textToolsGetText(id);
+  text = text.toLowerCase();
+  textToolsSetText(id, text);
+}
+
+function textTools5Groups(id) {
+  var text = textToolsGetText(id);
+  var text = text.replace(/\s+/g, '');
+  var newText = '';
+  for (var i = 0; i < text.length; i++) {
+    if (i > 0 && (i % 5) == 0)
+    newText += ' ';
+    newText += text[i];
+  }
+  textToolsSetText(id, newText);
+}
+
+function textToolsUndo(id) {
+  if (textToolsTexts.length > 0) {
+    var text = textToolsTexts.pop();
+    textToolsSetText(id, text);
+  }
+}
+
+function copyElementText(id) {
+  var copyElement = document.getElementById(id);
+  copyElement.select();
+  document.cookie = 'savedtext=' + encodeURIComponent(copyElement.value);
+  document.execCommand("copy");
+}
+
+function pasteIntoElement(id, func) {
+  if (navigator.clipboard != undefined && navigator.clipboard.readText != null) {
+    navigator.clipboard.readText().then(function(text) { document.getElementById(id).value = text; if (func) func(); }).catch(function() { alert('Failed to read from clipboard. Access denied.'); });
+  }
+  else {
+    var savedtext = document.cookie.match('(^|;)\s?savedtext=([^;]*)(;|$)');
+    if (savedtext) {
+      document.getElementById(id).value = decodeURIComponent(savedtext[2]);
+      if (func) func();
+    }
+  }
+}
+
+</script>
+<script>
+function getAlphabet1() {
+  return getAlphabet();
+}
+
+function getAlphabet2() {
+  return getAlphabet().split('').reverse().join('');
+}
+
+function encrypt(src) {
+  var alphabet1 = getAlphabet1();
+  var alphabet2 = getAlphabet2();
+  return transform(src, alphabet1, alphabet2);
+}
+
+function decrypt(src) {
+  var alphabet1 = getAlphabet1();
+  var alphabet2 = getAlphabet2();
+  return transform(src, alphabet2, alphabet1);
+}
+
+function transform(src, alphabet1, alphabet2) {
+  var result = '';
+
+  for (var i = 0; i < src.length; i++) {
+    result += transformChar(src[i], alphabet1, alphabet2);
+  }
+
+  return result;
+}
+
+function transformChar(ch, alphabet1, alphabet2) {
+  var index = alphabet1.indexOf(ch);
+  if (index == -1)
+  return ch;
+  return alphabet2[index];
+}
+
+function updateExplanation() {
+  var alphabet1 = getAlphabet1();
+  var alphabet2 = getAlphabet2();
+  var result = '';
+  for (var i = 0; i < alphabet1.length; i++) {
+    result += '<tr><td>' + htmlEncode(alphabet1[i]) + '</td><td>' + htmlEncode(alphabet2[i]) + '</td></tr>';
+  }
+  document.getElementById("explanationtbody").innerHTML = result;
+}
+</script>
+</html>

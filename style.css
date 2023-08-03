@@ -1,0 +1,48 @@
+body{
+  font-family: "Streetwear";
+  font-weight: 400;
+  line-height: 1.5;
+  font-size: 1.5rem;
+  color: #D0CAE5;
+  text-align: left;
+  background-color: #2A2A3B;
+  height: auto;
+}
+.block{
+  background-color: #2E2E41;
+  padding: 20px;
+  height: 5%;
+  width: 85%;
+  border-radius: 10px;
+  margin-top: 5%;
+  margin-left: 5%;
+  box-shadow: 16px 16px 19px 0px #10102A;
+}
+.block_2{
+  background-color: #2E2E41;
+  padding: 20px;
+  height: 5%;
+  width: 47%;
+  border-radius: 10px;
+  margin-top: 5%;
+  margin-left: 5%;
+  box-shadow: 16px 16px 19px 0px #10102A;
+  margin-bottom: 50px;
+}
+.line{
+  background-color: #F09666;
+  margin-left: 65% ;
+  top: 0;
+  padding: 5px !important;
+  height: 200% ;
+  position: absolute;
+  z-index: -1;
+}
+.form-textarea{
+    background-color: #2E2E41;
+    height: 180px;
+     width: 621px;
+      max-width: 621px;
+       max-height: 180px;
+       color: #D0CAE5;
+}
