@@ -1,4 +1,4 @@
-# atbash_encryption
+# Web Application for Text and File Encryption using the Atbash Method
 Website in pure html css and js with atbash encryption
 ![image](https://cdn.discordapp.com/attachments/835627160709365852/1136596481512574976/image.png)
 
